@@ -1,5 +1,6 @@
 # $ pytest -sv
 import random
+from typing import Tuple, List
 from .main import *
 
 
@@ -27,16 +28,30 @@ class TestExpressionTree(object):
 
 class TestSearchTree(object):
 
-    def test_find(self):
-        variables = list(range(10))
+    def init_with_range(self, n: int) -> Tuple[SearchTree, List[int]]:
+        variables = list(range(n))
         random.shuffle(variables)
         t = SearchTree()
         for x in variables:
             t.insert(x)
+        return t, variables
+
+    def test_find(self):
+        t, variables = self.init_with_range(10)
         for x in variables:
             assert t.find(x).value == x
         assert t.find_min().value == min(variables)
         assert t.find_max().value == max(variables)
 
+    def test_iter(self):
+        n = 10
+        t, variables = self.init_with_range(n)
+        assert list(t.preorder_iter()) == sorted(variables)
+
     def test_delete(self):
-        pass
+        n = 10
+        t, variables = self.init_with_range(n)
+        for i, x in enumerate(variables):
+            t = t.delete(x)
+            if t:
+                assert list(t.preorder_iter()) == sorted(variables[i + 1:])

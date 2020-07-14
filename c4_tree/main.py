@@ -1,3 +1,8 @@
+class EmptyTreeError(Exception):
+    """因为是空树，而无法执行某些操作"""
+    pass
+
+
 class BinaryTreeNode(object):
 
     def __init__(self):
@@ -5,6 +10,7 @@ class BinaryTreeNode(object):
         self.value = None
         self.left = None
         self.right = None
+        self.parent = None
 
     def set_value(self, x):
         """子树非空，因此这里不设置 left 和 right 的值"""
@@ -20,6 +26,9 @@ class BinaryTreeNode(object):
     def has_right(self) -> bool:
         return self.right is not None
 
+    def is_leaf(self) -> bool:
+        return self.left is None and self.right is None
+
 
 class ExpressionTreeNode(BinaryTreeNode):
 
@@ -33,6 +42,14 @@ class ExpressionTreeNode(BinaryTreeNode):
 
 class SearchTree(BinaryTreeNode):
 
+    def __init__(self):
+        super().__init__()
+        self.counter = 0  # 重复插入用计数实现，但删除是实时删除（非懒删除）
+
+    def set_value(self, x) -> 'SearchTree':
+        super().set_value(x)
+        self.counter += 1
+
     def insert(self, x) -> 'SearchTree':
         if self.is_empty():
             self.set_value(x)
@@ -40,10 +57,12 @@ class SearchTree(BinaryTreeNode):
         elif x < self.value:
             if not self.has_left():
                 self.left = self.__class__()
+                self.left.parent = self
             return self.left.insert(x)
         elif x > self.value:
             if not self.has_right():
                 self.right = self.__class__()
+                self.right.parent = self
             return self.right.insert(x)
 
     def find(self, x) -> 'SearchTree':
@@ -55,6 +74,16 @@ class SearchTree(BinaryTreeNode):
             return self.right.find(x)
         else:
             return self
+
+    def preorder_iter(self):
+        if self.is_empty():
+            raise StopIteration()
+        if self.has_left():
+            yield from self.left.preorder_iter()
+        for i in range(self.counter):
+            yield self.value
+        if self.has_right():
+            yield from self.right.preorder_iter()
 
     def find_min(self) -> 'SearchTree':
         """递归版本"""
@@ -69,3 +98,26 @@ class SearchTree(BinaryTreeNode):
         while node.right is not None and not node.right.is_empty():
             node = node.right
         return node
+
+    def delete(self, x) -> 'SearchTree':
+        """删除可能导致子树变化，因此需要赋值操作，返回的是新子树的根"""
+        if self.is_empty():
+            raise EmptyTreeError()
+        if x < self.value:
+            self.left = self.left.delete(x)
+        elif x > self.value:
+            self.right = self.right.delete(x)
+        else:
+            if self.counter > 1:
+                self.counter -= 1
+            else:
+                if self.is_leaf():
+                    return None
+                if self.has_left() and self.has_right():
+                    # 随意选择了左子树的最大节点
+                    new_node = self.left.find_max()
+                    new_node.left = self.left.delete(new_node.value)
+                    new_node.right = self.right
+                    return new_node
+                return self.left or self.right
+        return self
