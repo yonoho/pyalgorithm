@@ -29,6 +29,17 @@ class BinaryTreeNode(object):
     def is_leaf(self) -> bool:
         return self.left is None and self.right is None
 
+    @property
+    def height(self):
+        if self.is_leaf():
+            return 0
+        elif self.has_left() and self.has_right():
+            return max([self.left.height, self.right.height]) + 1
+        elif self.has_left():
+            return self.left.height + 1
+        else:
+            return self.right.height + 1
+
 
 class ExpressionTreeNode(BinaryTreeNode):
 
