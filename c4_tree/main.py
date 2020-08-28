@@ -51,17 +51,17 @@ class ExpressionTreeNode(BinaryTreeNode):
             return self.value
 
 
-class SearchTree(BinaryTreeNode):
+class SearchTreeNode(BinaryTreeNode):
 
     def __init__(self):
         super().__init__()
         self.counter = 0  # 重复插入用计数实现，但删除是实时删除（非懒删除）
 
-    def set_value(self, x) -> 'SearchTree':
+    def set_value(self, x) -> 'SearchTreeNode':
         super().set_value(x)
         self.counter += 1
 
-    def insert(self, x) -> 'SearchTree':
+    def insert(self, x) -> 'SearchTreeNode':
         if self.is_empty():
             self.set_value(x)
             return self
@@ -76,7 +76,7 @@ class SearchTree(BinaryTreeNode):
                 self.right.parent = self
             return self.right.insert(x)
 
-    def find(self, x) -> 'SearchTree':
+    def find(self, x) -> 'SearchTreeNode':
         if self.is_empty():
             return self
         elif x < self.value:
@@ -96,21 +96,21 @@ class SearchTree(BinaryTreeNode):
         if self.has_right():
             yield from self.right.preorder_iter()
 
-    def find_min(self) -> 'SearchTree':
+    def find_min(self) -> 'SearchTreeNode':
         """递归版本"""
         if self.has_left() and not self.left.is_empty():
             return self.left.find_min()
         else:
             return self
 
-    def find_max(self) -> 'SearchTree':
+    def find_max(self) -> 'SearchTreeNode':
         """循环版本"""
         node = self
         while node.right is not None and not node.right.is_empty():
             node = node.right
         return node
 
-    def delete(self, x) -> 'SearchTree':
+    def delete(self, x) -> 'SearchTreeNode':
         """删除可能导致子树变化，因此需要赋值操作，返回的是新子树的根"""
         if self.is_empty():
             raise EmptyTreeError()
@@ -132,3 +132,13 @@ class SearchTree(BinaryTreeNode):
                     return new_node
                 return self.left or self.right
         return self
+
+
+class AvlTreeNode(SearchTreeNode):
+    def rotate_to_right(self):
+        """left node rise"""
+        return
+
+    def rotate_to_left(self):
+        """right node rise"""
+        return

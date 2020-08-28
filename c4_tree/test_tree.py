@@ -28,10 +28,10 @@ class TestExpressionTree(object):
 
 class TestSearchTree(object):
 
-    def init_with_range(self, n: int) -> Tuple[SearchTree, List[int]]:
+    def init_with_range(self, n: int) -> Tuple[SearchTreeNode, List[int]]:
         variables = list(range(n))
         random.shuffle(variables)
-        t = SearchTree()
+        t = SearchTreeNode()
         for x in variables:
             t.insert(x)
         return t, variables
