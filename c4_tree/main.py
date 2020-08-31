@@ -40,6 +40,42 @@ class BinaryTreeNode(object):
         else:
             return self.right.height + 1
 
+    def gen_2d_coordinates(self, idx=0, depth=0):
+        """生成一个二维表"""
+        if self.has_left() and not self.left.is_empty():
+            yield from self.left.gen_2d_coordinates(idx - 1, depth + 1)
+        yield idx, depth, self.value
+        if self.has_right() and not self.right.is_empty():
+            yield from self.right.gen_2d_coordinates(idx + 1, depth + 1)
+
+    def gen_2d_table(self):
+        coordinates = list(self.gen_2d_coordinates())
+        rows = [r[0] for r in coordinates]
+        cols = [r[1] for r in coordinates]
+        width = max(rows) - min(rows) + 1
+        depth = max(cols) + 1
+        table = [[None for j in range(width)] for i in range(depth)]
+        for idx, depth, value in coordinates:
+            table[depth][idx - min(rows)] = value
+        return table
+
+    def print(self):
+        table = self.gen_2d_table()
+        depth = len(table)
+        width = len(table[0])
+        col_widths = []
+        for i in range(width):
+            max_value = 0
+            for j in range(depth):
+                if table[j][i]:
+                    max_value = max([max_value, table[j][i]])
+            col_widths.append(len(str(max_value)))
+        print('')
+        for row in table:
+            for i, v in enumerate(row):
+                row[i] = '%*d' % (col_widths[i], v) if v else ' ' * col_widths[i]
+            print(''.join(row))
+
 
 class ExpressionTreeNode(BinaryTreeNode):
 
@@ -135,10 +171,51 @@ class SearchTreeNode(BinaryTreeNode):
 
 
 class AvlTreeNode(SearchTreeNode):
-    def rotate_to_right(self):
+    def rotate_to_right(self) -> 'AvlTreeNode':
         """left node rise"""
-        return
+        if not self.left:
+            raise ValueError('Can not rotate to right while left node non-exists.')
+        new_root = self.left
+        self.left = new_root.right
+        if self.left:
+            self.left.parent = self
+        new_root.right = self
+        self.parent = new_root
+        return new_root
 
-    def rotate_to_left(self):
+    def rotate_to_left(self) -> 'AvlTreeNode':
         """right node rise"""
-        return
+        if not self.right:
+            raise ValueError('Can not rotate to left while right node non-exists.')
+        new_root = self.right
+        self.right = new_root.left
+        if self.right:
+            self.right.parent = self
+        new_root.left = self
+        self.parent = new_root
+        return new_root
+
+    def is_balanced(self) -> bool:
+        if self.is_empty():
+            return True
+        left_height = self.left.height if self.has_left() else 0
+        right_height = self.right.height if self.has_right() else 0
+        return abs(left_height - right_height) < 2
+
+    def rebalance(self) -> 'AvlTreeNode':
+        if self.has_left() and self.left.height == self.height - 1:
+            if self.left.has_left() and self.left.left.height == self.height - 2:
+                return self.rotate_to_right()
+            else:
+                return self.left.rotate_to_left().rotate_to_right()
+        else:
+            if self.right.has_right() and self.right.right.height == self.height - 2:
+                return self.rotate_to_left()
+            else:
+                return self.right.rotate_to_right().rotate_to_left()
+
+    def insert(self, *args, **kwargs):
+        ret = super().insert(*args, **kwargs)
+        if not self.is_balanced():
+            ret = self.rebalance()
+        return ret

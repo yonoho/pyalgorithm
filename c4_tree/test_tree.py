@@ -1,5 +1,8 @@
 # $ pytest -sv
+# $ pytest -sv -m "not debug"
+# $ pytest -sv -m "not debug" --pdb
 import random
+import pytest
 from typing import Tuple, List
 from .main import *
 
@@ -55,3 +58,30 @@ class TestSearchTree(object):
             t = t.delete(x)
             if t:
                 assert list(t.preorder_iter()) == sorted(variables[i + 1:])
+
+
+class TestAvlTree(object):
+
+    def init_with_range(self, n: int) -> Tuple[AvlTreeNode, List[int]]:
+        variables = list(range(n))
+        random.shuffle(variables)
+        t = AvlTreeNode()
+        for x in variables:
+            t.insert(x)
+        return t, variables
+
+    @pytest.mark.debug
+    def test_rotate(self):
+        n = 20
+        t, variables = self.init_with_range(n)
+        t.print()
+        t = t.rotate_to_left()
+        t.print()
+        t = t.rotate_to_right()
+        t.print()
+
+    def test_balance(self):
+        n = 20
+        t, variables = self.init_with_range(n)
+        assert t.is_balanced()
+        t.print()
