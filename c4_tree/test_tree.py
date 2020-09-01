@@ -65,9 +65,19 @@ class TestAvlTree(object):
     def init_with_range(self, n: int) -> Tuple[AvlTreeNode, List[int]]:
         variables = list(range(n))
         random.shuffle(variables)
+        print(variables)
         t = AvlTreeNode()
         for x in variables:
             t.insert(x)
+        return t, variables
+
+    def balanced_init_with_range(self, n: int) -> Tuple[AvlTreeNode, List[int]]:
+        variables = list(range(n))
+        random.shuffle(variables)
+        print(variables)
+        t = AvlTreeNode()
+        for x in variables:
+            _, t = t.balanced_insert(x)
         return t, variables
 
     @pytest.mark.debug
@@ -82,6 +92,8 @@ class TestAvlTree(object):
 
     def test_balance(self):
         n = 20
-        t, variables = self.init_with_range(n)
-        assert t.is_balanced()
+        t, variables = self.balanced_init_with_range(n)
         t.print()
+        assert t.is_balanced()
+        print(list(t.preorder_iter()))
+        assert list(t.preorder_iter()) == sorted(variables)

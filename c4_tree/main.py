@@ -1,3 +1,6 @@
+from typing import Tuple
+
+
 class EmptyTreeError(Exception):
     """因为是空树，而无法执行某些操作"""
     pass
@@ -12,6 +15,9 @@ class BinaryTreeNode(object):
         self.right = None
         self.parent = None
 
+    def __repr__(self):
+        return '%s: %d' % (self.__class__, self.value)
+
     def set_value(self, x):
         """子树非空，因此这里不设置 left 和 right 的值"""
         self.value = x
@@ -23,8 +29,20 @@ class BinaryTreeNode(object):
     def has_left(self) -> bool:
         return self.left is not None
 
+    def set_left(self, node):
+        """允许 set None"""
+        self.left = node
+        if node:
+            node.parent = self
+
     def has_right(self) -> bool:
         return self.right is not None
+
+    def set_right(self, node):
+        """允许 set None"""
+        self.right = node
+        if node:
+            node.parent = self
 
     def is_leaf(self) -> bool:
         return self.left is None and self.right is None
@@ -103,14 +121,14 @@ class SearchTreeNode(BinaryTreeNode):
             return self
         elif x < self.value:
             if not self.has_left():
-                self.left = self.__class__()
-                self.left.parent = self
+                self.set_left(self.__class__())
             return self.left.insert(x)
         elif x > self.value:
             if not self.has_right():
-                self.right = self.__class__()
-                self.right.parent = self
+                self.set_right(self.__class__())
             return self.right.insert(x)
+        else:
+            return self
 
     def find(self, x) -> 'SearchTreeNode':
         if self.is_empty():
@@ -176,11 +194,11 @@ class AvlTreeNode(SearchTreeNode):
         if not self.left:
             raise ValueError('Can not rotate to right while left node non-exists.')
         new_root = self.left
-        self.left = new_root.right
-        if self.left:
-            self.left.parent = self
-        new_root.right = self
-        self.parent = new_root
+        # 先过继
+        self.set_left(new_root.right)
+        # 再旋转
+        new_root.set_right(self)
+        new_root.parent = None
         return new_root
 
     def rotate_to_left(self) -> 'AvlTreeNode':
@@ -188,34 +206,48 @@ class AvlTreeNode(SearchTreeNode):
         if not self.right:
             raise ValueError('Can not rotate to left while right node non-exists.')
         new_root = self.right
-        self.right = new_root.left
-        if self.right:
-            self.right.parent = self
-        new_root.left = self
-        self.parent = new_root
+        # 先过继
+        self.set_right(new_root.left)
+        # 再旋转
+        new_root.set_left(self)
+        new_root.parent = None
         return new_root
 
     def is_balanced(self) -> bool:
+        """只检查当前结点"""
         if self.is_empty():
             return True
-        left_height = self.left.height if self.has_left() else 0
-        right_height = self.right.height if self.has_right() else 0
+        left_height = self.left.height + 1 if self.has_left() else 0
+        right_height = self.right.height + 1 if self.has_right() else 0
         return abs(left_height - right_height) < 2
+
+    def balanced_insert(self, x) -> Tuple['AvlTreeNode', 'AvlTreeNode']:
+        """因为可能造成树的旋转，因此返回 (new_node, root)"""
+        ret = self.insert(x)
+        check_node = ret.parent or ret
+        while check_node:
+            if not check_node.is_balanced():
+                parent_node = check_node.parent
+                rebalanced_node = check_node.rebalance()
+                if parent_node:
+                    side = 'left' if check_node.value < parent_node.value else 'right'
+                    getattr(parent_node, 'set_%s' % side)(rebalanced_node)
+            if check_node.parent:
+                check_node = check_node.parent
+            else:
+                break
+        return ret, check_node
 
     def rebalance(self) -> 'AvlTreeNode':
         if self.has_left() and self.left.height == self.height - 1:
             if self.left.has_left() and self.left.left.height == self.height - 2:
                 return self.rotate_to_right()
             else:
-                return self.left.rotate_to_left().rotate_to_right()
+                self.set_left(self.left.rotate_to_left())
+                return self.rotate_to_right()
         else:
             if self.right.has_right() and self.right.right.height == self.height - 2:
                 return self.rotate_to_left()
             else:
-                return self.right.rotate_to_right().rotate_to_left()
-
-    def insert(self, *args, **kwargs):
-        ret = super().insert(*args, **kwargs)
-        if not self.is_balanced():
-            ret = self.rebalance()
-        return ret
+                self.set_right(self.right.rotate_to_right())
+                return self.rotate_to_left()
