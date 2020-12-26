@@ -22,9 +22,9 @@ class TestSort(object):
         insertion_sort(rand_int_array)
         self.assert_sorted(rand_int_array)
 
-    def test_shell_sort(self, rand_int_array):
-        shell_sort(rand_int_array)
-        self.assert_sorted(rand_int_array)
+    # def test_shell_sort(self, rand_int_array):
+    #     shell_sort(rand_int_array)
+    #     self.assert_sorted(rand_int_array)
 
     def test_heap_sort(self, rand_int_array):
         heap_sort(rand_int_array)
