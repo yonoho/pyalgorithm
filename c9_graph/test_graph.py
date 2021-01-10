@@ -51,3 +51,18 @@ class TestGraph(object):
         top_list = graph.top_list
         for v, w in edges.keys():
             assert top_list.index(v) < top_list.index(w)
+
+    def test_unweighted_shortest_path(self, acyclic_graph):
+        vertexes, edges = acyclic_graph
+        graph = Graph(vertexes, edges)
+        assert graph.breadth_first_search(1, 7)[0] == 2
+        assert graph.breadth_first_search(2, 6)[0] == 2
+        assert graph.breadth_first_search(1, 4) == (1, [1, 4])
+        assert graph.breadth_first_search(1, 1) == (0, [1])
+
+    def test_weighted_shortest_path(self, weighted_acyclic_graph):
+        vertexes, edges = weighted_acyclic_graph
+        graph = Graph(vertexes, edges)
+        assert graph.dijkstra(1, 4) == (1, [1, 4])
+        assert graph.dijkstra(1, 2) == (2, [1, 2])
+        assert graph.dijkstra(2, 6) == (8, [2, 4, 7, 6])
