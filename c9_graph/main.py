@@ -1,4 +1,5 @@
 import copy
+from functools import reduce
 from typing import Set, Dict, Tuple, List
 
 
@@ -22,25 +23,29 @@ class Graph(object):
         self.edges = edges
         self.acyclic = True
         self.adjacency_list = {}
+        self.indegree = {}
         for v in vertexes:
             self.adjacency_list.setdefault(v, {})
+            self.indegree[v] = 0
         for (v, w), c in edges.items():
             self.adjacency_list[v][w] = c
+            self.indegree[w] += 1
             if self.acyclic and v in self.adjacency_list[w]:
                 self.acyclic = False
+        self.cur_non_ins = [v for v in vertexes if v not in set(e[1] for e in edges)]
 
     def _top_sort(self) -> List[int]:
-        edges = set(self.edges.keys())
         vertexes = copy.deepcopy(self.vertexes)
+        indegree = copy.deepcopy(self.indegree)
         ret = []
         while vertexes:
-            v_ins = {e[1] for e in edges}
-            v_non_ins = [v for v in vertexes if v not in v_ins]
-            assert v_non_ins, 'cycle found in top sort.'
-            ret.extend(v_non_ins)
-            for v in v_non_ins:
-                vertexes.remove(v)
-            edges = [e for e in edges if e[0] not in v_non_ins]
+            v_non_in = self.cur_non_ins.pop()
+            vertexes.remove(v_non_in)
+            ret.append(v_non_in)
+            for w in self.adjacency_list[v_non_in].keys():
+                indegree[w] -= 1
+                if indegree[w] == 0:
+                    self.cur_non_ins.append(w)
         return ret
 
     @property
@@ -49,3 +54,9 @@ class Graph(object):
         if not hasattr(self, '_top_list'):
             self._top_list = self._top_sort()
         return self._top_list
+
+    def breadth_first_search(self, start: int, end: int) -> Tuple[int, List[int]]:
+        cost = 0,
+        path = []
+
+        return cost, path
