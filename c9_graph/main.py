@@ -1,7 +1,7 @@
 import copy
 import heapq
-from functools import reduce
 from typing import Set, Dict, Tuple, List
+from disjoint_set import DisjointSet
 
 
 class Graph(object):
@@ -23,6 +23,7 @@ class Graph(object):
         self.vertexes = vertexes
         self.edges = edges
         self.acyclic = True
+        self.has_nagtive_edge = False
         self.adjacency_list = {}
         self.indegree = {}
         for v in vertexes:
@@ -33,6 +34,8 @@ class Graph(object):
             self.indegree[w] += 1
             if self.acyclic and v in self.adjacency_list[w]:
                 self.acyclic = False
+            if c < 0:
+                self.has_nagtive_edge = True
         self.curr_non_ins = [v for v in vertexes if v not in set(e[1] for e in edges)]
 
     def _top_sort(self) -> List[int]:
@@ -107,3 +110,62 @@ class Graph(object):
         while path[0] != start:
             path.insert(0, scanned_vertexes[path[0]][2])
         return cost, path
+
+    def acyclic_dijkstra(self, start: int, end: int) -> Tuple[int, List[int]]:
+        raise NotImplementedError()
+
+
+class UndirectedGraph(object):
+    def __init__(self, vertexes: Set[int], edges: Dict[Tuple[int], int]):
+        self.vertexes = vertexes
+        self.edges = edges
+        self.acyclic = True
+        self.has_nagtive_edge = False
+        self.adjacency_list = {}
+        for v in vertexes:
+            self.adjacency_list.setdefault(v, {})
+        for (v, w), c in edges.items():
+            self.adjacency_list[v][w] = c
+            self.adjacency_list[w][v] = c
+            if self.acyclic and (v in self.adjacency_list[w] or w in self.adjacency_list[v]):
+                self.acyclic = False
+            if c < 0:
+                self.has_nagtive_edge = True
+
+    def prim(self) -> Set[Tuple[int]]:
+        """返回所有的边, 为了方便测试，返回的边的两个顶点是有序的"""
+        vertex_records = {v: [False, 0, 0] for v in self.vertexes}  # known, dv, parent_v
+        start = list(self.vertexes)[0]
+        vertex_records[start][0] = True
+        head_v = start
+        select_q = []
+        while not all([r[0] for r in vertex_records.values()]):
+            # feed queue
+            for w, cost in self.adjacency_list[head_v].items():
+                w_record = vertex_records[w]
+                if not w_record[0] and (not w_record[1] or w_record[1] > cost):
+                    w_record[1] = cost
+                    w_record[2] = head_v
+                    heapq.heappush(select_q, (cost, w))
+            # pop queue
+            while True:
+                head_d, head_v = heapq.heappop(select_q)
+                if not vertex_records[head_v][0]:
+                    vertex_records[head_v][0] = True
+                    break
+        return {tuple(sorted([v_record[2], v])) for v, v_record in vertex_records.items() if v_record[2]}
+
+    def kruskal(self) -> Set[Tuple[int]]:
+        edge_queue = []
+        for e, cost in self.edges.items():
+            heapq.heappush(edge_queue, (cost, e))
+        vertex_set = DisjointSet()
+        for v in self.vertexes:
+            vertex_set.find(v)
+        known_edges = set()
+        while len(list(vertex_set.itersets())) > 1:
+            cost, edge = heapq.heappop(edge_queue)
+            if not vertex_set.connected(*edge):
+                known_edges.add(tuple(sorted(list(edge))))
+                vertex_set.union(*edge)
+        return known_edges
