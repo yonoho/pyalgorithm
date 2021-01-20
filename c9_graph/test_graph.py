@@ -64,6 +64,22 @@ def weighted_undirected_graph():
 
 
 @pytest.fixture
+def unweighted_undirected_graph():
+    vertexes = set(range(1, 8))
+    edges = {
+        (1, 2): 1,
+        (1, 4): 1,
+        (2, 3): 1,
+        (3, 4): 1,
+        (3, 7): 1,
+        (4, 5): 1,
+        (4, 6): 1,
+        (5, 6): 1,
+    }
+    return vertexes, edges
+
+
+@pytest.fixture
 def min_spanning_tree():
     return {
         (1, 2),
@@ -73,6 +89,23 @@ def min_spanning_tree():
         (5, 7),
         (6, 7),
     }
+
+
+@pytest.fixture
+def depth_first_spanning_tree():
+    return {
+        (1, 2),
+        (2, 3),
+        (3, 4),
+        (3, 7),
+        (4, 5),
+        (5, 6),
+    }
+
+
+@pytest.fixture
+def articulation_points():
+    return {3, 4}
 
 
 class TestGraph(object):
@@ -108,3 +141,14 @@ class TestGraph(object):
         vertexes, edges = weighted_undirected_graph
         graph = UndirectedGraph(vertexes, edges)
         assert graph.kruskal() == min_spanning_tree
+
+    def test_depth_first_spanning_tree(self, unweighted_undirected_graph, depth_first_spanning_tree):
+        vertexes, edges = unweighted_undirected_graph
+        graph = UndirectedGraph(vertexes, edges)
+        graph.depth_first_spanning_tree()
+        assert set([tuple(sorted([k, v])) for k, v in graph.parent.items() if k in vertexes and v in vertexes]) == depth_first_spanning_tree
+
+    def test_find_articulation_points(self, unweighted_undirected_graph, articulation_points):
+        vertexes, edges = unweighted_undirected_graph
+        graph = UndirectedGraph(vertexes, edges)
+        assert graph.find_articulation_points() == articulation_points

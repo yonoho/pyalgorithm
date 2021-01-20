@@ -1,5 +1,6 @@
 import copy
 import heapq
+import math
 from typing import Set, Dict, Tuple, List
 from disjoint_set import DisjointSet
 
@@ -131,6 +132,11 @@ class UndirectedGraph(object):
                 self.acyclic = False
             if c < 0:
                 self.has_nagtive_edge = True
+        # spanning tree related
+        self.visited = dict.fromkeys(vertexes, False)
+        self.num = dict.fromkeys(vertexes, None)
+        self.low = dict.fromkeys(vertexes, None)
+        self.parent = dict.fromkeys(vertexes, None)
 
     def prim(self) -> Set[Tuple[int]]:
         """返回所有的边, 为了方便测试，返回的边的两个顶点是有序的"""
@@ -169,3 +175,43 @@ class UndirectedGraph(object):
                 known_edges.add(tuple(sorted(list(edge))))
                 vertex_set.union(*edge)
         return known_edges
+
+    def depth_first_spanning_tree(self, v: int = None, counter: int = 1):
+        if v is None:
+            v = min(self.vertexes)
+        self.visited[v] = True
+        self.num[v] = counter
+        counter += 1
+        for w in self.adjacency_list[v].keys():
+            if not self.visited[w]:
+                self.parent[w] = v
+                counter = self.depth_first_spanning_tree(w, counter)
+        return counter
+
+    def _cal_low(self, v: int):
+        sub_low = math.inf
+        for w, p in self.parent.items():
+            if p == v:
+                sub_low = min([sub_low, self._cal_low(w)])
+        num_v = self.num[v]
+        back_num = math.inf
+        for w in self.adjacency_list[v]:
+            if w != self.parent[v]:  # back edge
+                back_num = min([back_num, self.num[w]])
+        low_v = min([num_v, back_num, sub_low])
+        self.low[v] = low_v
+        return low_v
+
+    def find_articulation_points(self):
+        if not all(self.visited.values()):
+            self.depth_first_spanning_tree()
+        root = [v for v, p in self.parent.items() if not p][0]
+        self._cal_low(root)
+        points = []
+        if len([v for v, p in self.parent.items() if p == root]) > 1:
+            points.append(root)
+        for v in (self.vertexes - {root}):
+            sub_vs = [w for w, p in self.parent.items() if p == v]
+            if any([self.low[w] >= self.num[v] for w in sub_vs]):
+                points.append(v)
+        return set(points)
