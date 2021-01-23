@@ -215,3 +215,32 @@ class UndirectedGraph(object):
             if any([self.low[w] >= self.num[v] for w in sub_vs]):
                 points.append(v)
         return set(points)
+
+    @classmethod
+    def find_one_circuit(cls, start: int, available_adjacency_vs: Dict[int, List[int]]) -> List[Tuple[int]]:
+        edges = [(start, available_adjacency_vs[start].pop())]
+        available_adjacency_vs[edges[0][1]].remove(start)
+        while edges[-1][1] != edges[0][0]:
+            edges.append((edges[-1][1], available_adjacency_vs[edges[-1][1]].pop()))
+            available_adjacency_vs[edges[-1][1]].remove(edges[-1][0])
+        return edges
+
+    def find_euler_circuit(self, start: int) -> List[int]:
+        available_adjacency_vs = {}
+        for v, w in self.edges.keys():
+            available_adjacency_vs.setdefault(v, []).append(w)
+            available_adjacency_vs.setdefault(w, []).append(v)
+        euler_path = []
+        while any(available_adjacency_vs.values()):
+            # 找到一个尚未使用的边
+            for v in euler_path:
+                if available_adjacency_vs[v]:
+                    start = v
+                    break
+            new_edges = self.find_one_circuit(start, available_adjacency_vs)
+            # 拼接
+            new_circuit = [e[0] for e in new_edges]
+            insert_idx = euler_path.index(start) if euler_path else 0
+            euler_path = euler_path[:insert_idx] + new_circuit + euler_path[insert_idx:]
+        euler_path.append(euler_path[0])
+        return euler_path

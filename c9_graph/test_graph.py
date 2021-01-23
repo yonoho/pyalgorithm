@@ -104,6 +104,35 @@ def depth_first_spanning_tree():
 
 
 @pytest.fixture
+def euler_graph():
+    vertexes = set(range(1, 13))
+    edges = {
+        (1, 3): 1,
+        (1, 4): 1,
+        (2, 3): 1,
+        (2, 8): 1,
+        (3, 4): 1,
+        (3, 6): 1,
+        (3, 7): 1,
+        (3, 9): 1,
+        (4, 5): 1,
+        (4, 7): 1,
+        (4, 10): 1,
+        (4, 11): 1,
+        (5, 10): 1,
+        (6, 9): 1,
+        (7, 9): 1,
+        (7, 10): 1,
+        (8, 9): 1,
+        (9, 10): 1,
+        (9, 12): 1,
+        (10, 11): 1,
+        (10, 12): 1,
+    }
+    return vertexes, edges
+
+
+@pytest.fixture
 def articulation_points():
     return {3, 4}
 
@@ -152,3 +181,11 @@ class TestGraph(object):
         vertexes, edges = unweighted_undirected_graph
         graph = UndirectedGraph(vertexes, edges)
         assert graph.find_articulation_points() == articulation_points
+
+    def test_euler_circuit(self, euler_graph):
+        vertexes, edges = euler_graph
+        graph = UndirectedGraph(vertexes, edges)
+        euler_path = graph.find_euler_circuit(7)
+        assert len(euler_path) == len(edges) + 1
+        for i in range(len(euler_path) - 1):
+            assert tuple(sorted(euler_path[i: i + 2])) in edges
