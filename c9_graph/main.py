@@ -64,9 +64,9 @@ class Graph(object):
         known_vertexes = {start: [0, start]}  # dv, parent_v
         head_verts = [start]
         found_end = (end in known_vertexes)
-        while not found_end:
+        while not found_end and head_verts:
+            new_head_verts = []
             for v in head_verts:
-                new_head_verts = []
                 for w in self.adjacency_list[v].keys():
                     if w in known_vertexes:
                         continue
@@ -77,7 +77,7 @@ class Graph(object):
                         break
                 if found_end:
                     break
-                head_verts = new_head_verts
+            head_verts = new_head_verts
         cost = known_vertexes[end][0]
         path = [end]
         while path[0] != start:
